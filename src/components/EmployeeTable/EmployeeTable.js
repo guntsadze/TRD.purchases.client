@@ -1,7 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { DataGrid } from '@mui/x-data-grid';
-import { Button, TextField, Snackbar, Alert, AlertTitle, IconButton, MenuItem, Select, Modal, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Button, 
+        TextField, 
+        Snackbar, 
+        Alert, 
+        AlertTitle, 
+        IconButton, 
+        MenuItem, 
+        Select, 
+        Modal, 
+        Dialog, 
+        DialogTitle, 
+        DialogContent, 
+        DialogActions } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { v4 as uuidv4 } from 'uuid';
@@ -14,6 +26,7 @@ function EmployeeTable() {
     const [lastName, setLastName] = useState('');
     const [position, setPosition] = useState('');
     const [selectedDepartment, setSelectedDepartment] = useState('');
+    const [personalNumber, setPersonalNumber] = useState('');
     const [errorAlertOpen, setErrorAlertOpen] = useState(false);
     const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
     const [deleteItemId, setDeleteItemId] = useState(null);
@@ -42,13 +55,25 @@ function EmployeeTable() {
     };
 
     const handleAddEmployee = async () => {
-        if (!firstName.trim() || !lastName.trim() || !position.trim() || !selectedDepartment.trim()) {
+        if (!firstName.trim() || 
+            !lastName.trim() || 
+            !position.trim() || 
+            !selectedDepartment.trim() || 
+            !personalNumber.trim() || 
+            !/^\d+$/.test(personalNumber)) { // Check for personalNumber and validate with regex
             setErrorAlertOpen(true);
             return;
         }
     
         const newId = uuidv4();
-        const newEmployee = { id: newId, firstName: firstName, lastName: lastName, position: position, departmentId: selectedDepartment };
+        const newEmployee = { 
+            id: newId, 
+            firstName: firstName, 
+            lastName: lastName, 
+            position: position, 
+            departmentId: selectedDepartment,
+            personalNumber: personalNumber
+        };
     
         try {
             await axios.post('http://localhost:5269/api/employees', newEmployee);
@@ -56,6 +81,7 @@ function EmployeeTable() {
             setLastName('');
             setPosition('');
             setSelectedDepartment('');
+            setPersonalNumber('');
             handleCloseModal();
             fetchEmployees();
         } catch (error) {
@@ -97,6 +123,7 @@ function EmployeeTable() {
         setLastName('');
         setPosition('');
         setSelectedDepartment('');
+        setPersonalNumber('');
     };
 
     const handleCloseModal = () => {
@@ -104,33 +131,24 @@ function EmployeeTable() {
     };
 
     const columns = [
-        // { field:'id', headerName: 'ID' , width: 100, editable:false},
         { field: 'firstName', headerName: 'სახელი', width: 150, editable: true },
         { field: 'lastName', headerName: 'გვარი', width: 150, editable: true },
         { field: 'position', headerName: 'პოზიცია', width: 150, editable: true },
-        {
-            field: 'departmentId',
-            headerName: 'დეპარტამენტი',
-            width: 200,
+        { field: 'departmentId', headerName: 'დეპარტამენტი', width: 200,
             renderCell: (params) => {
                 const department = departments.find(dep => dep.id === params.value);
                 return department ? department.depName : '';
             }
         },
-        {
-            field: 'edit',
-            headerName: 'რედაქტირება',
-            width: 110,
+        { field: 'personalNumber', headerName: 'პირადი ნომერი', width: 200 },
+        { field: 'edit', headerName: 'რედაქტირება', width: 110,
             renderCell: (params) => (
                 <IconButton onClick={() => handleRowEdit(params.row)} color="primary" aria-label="edit">
                     <EditIcon />
                 </IconButton>
             ),
         },
-        {
-            field: 'delete',
-            headerName: 'წაშლა',
-            width: 100,
+        { field: 'delete', headerName: 'წაშლა', width: 100,
             renderCell: (params) => (
                 <IconButton onClick={() => handleRowDelete(params.row.id)} color="secondary" aria-label="delete">
                     <DeleteIcon />
@@ -197,6 +215,15 @@ function EmployeeTable() {
                         onChange={(e) => setPosition(e.target.value)}
                         fullWidth
                     />
+                    <TextField
+                        style={{paddingBottom:"20px"}}
+                        label="შეიყვანეთ პირადი ნომერი"
+                        value={personalNumber}
+                        onChange={(e) => setPersonalNumber(e.target.value)}
+                        fullWidth
+                        error={!(/^\d+$/.test(personalNumber)) && personalNumber !== ""}
+                        helperText={!(/^\d+$/.test(personalNumber)) && personalNumber !== "" ? "პირადი ნომერი უნდა შედგებოდეს მხოლოდ ციფრებისგან" : ""}
+                    />
                     <p style={{padding: '0', marginBottom:'4%', marginTop:'0'}}>
                         აირჩიეთ დეპარტამენტი
                     </p>
@@ -255,7 +282,7 @@ function EmployeeTable() {
             <Snackbar open={errorAlertOpen} autoHideDuration={6000} onClose={() => setErrorAlertOpen(false)}>
                 <Alert severity="error" onClose={() => setErrorAlertOpen(false)}>
                     <AlertTitle>შეცდომა</AlertTitle>
-                    გთხოვთ შეიყვანოთ სრული
+                    გთხოვთ შეიყვანოთ სრული ინფორმაცია
                 </Alert>
             </Snackbar>
         </div>
